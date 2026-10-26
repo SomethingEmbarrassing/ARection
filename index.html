@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARection – Spokane Metals</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="https://unpkg.com/@google/model-viewer@4.1.0/dist/model-viewer.min.js" defer integrity="sha384-T4vc5AP9W2o3EVVQC6Is5mbKqFE2eysxg1XHwaZLquK0SjtY+4cLHoN3j1mK/MmB" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js" defer integrity="sha384-Dr98ddmUw2QkdCarNQ+OL7xLty7cSxgR0T7v1tq4UErS/qLV0132sBYTolRAFuOV" crossorigin="anonymous"></script>
+  <script>
+    const YOUR_PUBLIC_URL = 'https://ar.spokanemetals.com/';
+  </script>
+  <script src="models.js"></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+
+  <!-- Gallery view -->
+  <section id="gallery" class="view">
+    <header class="site-header">
+      <h1>Spokane Metals — Structural Steel Models</h1>
+      <p class="subtitle">Select a model to view in 3D or launch AR on mobile</p>
+    </header>
+    <nav class="region-chips" id="regionChips" aria-label="Filter by region">
+      <!-- Chips injected by script.js -->
+    </nav>
+    <div class="card-grid" id="cardGrid">
+      <!-- Cards injected by script.js -->
+    </div>
+  </section>
+
+  <!-- Viewer view -->
+  <section id="viewer" class="view hidden">
+    <header class="viewer-header">
+      <button id="backBtn" class="back-btn" type="button">&#8592; All models</button>
+      <h2 id="viewerTitle"></h2>
+      <button id="helpBtn" class="help-btn" type="button" title="Controls">?</button>
+    </header>
+
+    <div class="viewer-wrap">
+      <!-- Lock controls sit inside model-viewer so they stay visible in the AR session (WebXR DOM overlay) -->
+      <model-viewer
+        id="model"
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        camera-controls
+        auto-rotate
+        shadow-intensity="1"
+        environment-image="neutral"
+        alt="3D model">
+        <div class="spinner" slot="progress-bar"></div>
+
+        <div class="ar-instruction-panel" id="arInstructionPanel">
+          <div class="panel-content">
+            <p id="instructionText">Rotate &amp; zoom to align, then Lock.</p>
+            <button id="panelCloseBtn" class="close-btn" type="button" aria-label="Dismiss">×</button>
+          </div>
+        </div>
+
+        <button id="floatingLockBtn" class="floating-lock-btn" type="button">
+          <span id="lockIcon">🔒</span> <span id="lockText">Lock</span>
+        </button>
+
+        <div class="branding-badge">
+          ARection Drawing by <strong>Matt Leon</strong>
+        </div>
+      </model-viewer>
+
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <span>Loading model…</span>
+      </div>
+    </div>
+
+    <div class="instructions">
+      Tap the AR button (on mobile), or scan the QR code from your phone to launch AR.
+    </div>
+
+    <div class="qr-container" id="qrContainer">
+      <div>Scan on your phone to view this model in AR:</div>
+      <canvas id="qrcode"></canvas>
+    </div>
+  </section>
+
+  <!-- Controls help modal -->
+  <div id="helpModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Controls</h3>
+        <button id="helpClose" class="back-btn" type="button">Close</button>
+      </div>
+      <div class="modal-columns">
+        <div>
+          <h4>3D view (this page)</h4>
+          <ul>
+            <li><b>One finger drag</b> — rotate around the model</li>
+            <li><b>Two finger drag</b> — slide / pan</li>
+            <li><b>Pinch</b> or scroll wheel — zoom</li>
+            <li>Desktop: left-drag rotates, right-drag pans</li>
+          </ul>
+        </div>
+        <div>
+          <h4>AR mode (after tapping AR)</h4>
+          <ul>
+            <li><b>One finger drag</b> — slide model across the surface</li>
+            <li><b>Two fingers twist</b> — rotate model</li>
+            <li><b>Pinch</b> — resize model</li>
+            <li><b>Lift your finger</b> — model anchors; walking then moves <i>you</i> around it</li>
+            <li>Model follows you while walking? You're still dragging — let go to anchor it.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
+
+<!-- ============================================================
+ARection — Spokane Metals LLC 3D Model Viewer
+© 2025-2026 Matt Leon / Spokane Metals LLC. All rights reserved.
+This code is proprietary and may not be copied, reused, or
+redistributed without explicit permission.
+============================================================ -->
