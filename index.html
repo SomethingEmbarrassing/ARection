@@ -15,6 +15,18 @@
 </head>
 <body>
 
+  <!-- Phone-only start screen for erection-drawing QR codes (anchor=origin) -->
+  <div id="anchorScreen" class="anchor-screen hidden">
+    <h2 id="anchorTitle"></h2>
+    <ol class="anchor-steps">
+      <li>Pinch to zoom</li>
+      <li>Swipe to rotate</li>
+      <li>Lock when correct</li>
+    </ol>
+    <button id="startArBtn" class="start-ar-btn" type="button">Start AR</button>
+    <p id="anchorMessage" class="anchor-message"></p>
+  </div>
+
   <!-- Gallery view -->
   <section id="gallery" class="view">
     <header class="site-header">
