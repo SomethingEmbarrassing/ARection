@@ -24,6 +24,10 @@ const panelCloseBtn = document.getElementById('panelCloseBtn');
 const instructionText = document.getElementById('instructionText');
 const lockIcon = document.getElementById('lockIcon');
 const lockText = document.getElementById('lockText');
+const anchorScreen = document.getElementById('anchorScreen');
+const anchorTitle = document.getElementById('anchorTitle');
+const anchorMessage = document.getElementById('anchorMessage');
+const startArBtn = document.getElementById('startArBtn');
 
 let models = [];
 let activeRegion = 'All';
@@ -158,6 +162,13 @@ function openViewer(m, pushState) {
     history.pushState({ model: m.id }, '', `?model=${encodeURIComponent(m.id)}`);
   }
 
+  // Erection-drawing QR: go straight to a phone-only AR start screen (no 3D preview)
+  if (isAnchorMode) {
+    setupAnchorScreen(m);
+  } else {
+    anchorScreen.classList.add('hidden');
+  }
+
   // Drawing-anchor UI (lock button + instructions) only when opened from an erection-drawing QR
   if (isAnchorMode) {
     modelViewer.removeAttribute('auto-rotate'); // no spinning while aligning to paper
@@ -192,6 +203,32 @@ function openViewer(m, pushState) {
     viewer.appendChild(fallback);
   }
 }
+
+/** Phone-only start screen for erection-drawing QR codes. */
+function setupAnchorScreen(m) {
+  anchorTitle.textContent = m.name;
+  anchorScreen.classList.remove('hidden');
+  anchorMessage.textContent = '';
+  startArBtn.disabled = false;
+
+  if (!isMobile) {
+    anchorMessage.textContent = 'Scan this code with your phone to open AR.';
+    startArBtn.disabled = true;
+  } else if (!modelViewer.canActivateAR) {
+    anchorMessage.textContent = 'AR is not supported on this device.';
+    startArBtn.disabled = true;
+  }
+}
+
+startArBtn.addEventListener('click', async () => {
+  anchorScreen.classList.add('hidden');
+  try {
+    await modelViewer.activateAR();
+  } catch (err) {
+    anchorScreen.classList.remove('hidden');
+    anchorMessage.textContent = 'Could not start AR. Try again.';
+  }
+});
 
 function showGallery(pushState) {
   viewer.classList.add('hidden');
