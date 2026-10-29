@@ -119,7 +119,7 @@ const MODELS = [
     "name": "Skyline Elementary",
     "description": "Skyline Elementary School",
     "glb": "Models/26-61.glb",
-    "usdz": "",
+    "usdz": "Models/26.61.usdz",
     "image": "thumbs/26-61.jpg",
     "region": "Western Washington",
     "scale": "0.1 0.1 0.1"
