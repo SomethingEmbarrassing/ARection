@@ -1,0 +1,695 @@
+/* ============================================================
+HTMLEON — Spokane Metals LLC 3D Model Viewer
+© 2025-2026 Matt Leon / Spokane Metals LLC
+============================================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #1e40af;
+  --primary-dark: #1e3a8a;
+  --accent: #dc2626;
+  --accent-hover: #b91c1c;
+  --bg: #ffffff;
+  --bg-secondary: #f9fafb;
+  --text: #1f2937;
+  --text-light: #6b7280;
+  --border: #e5e7eb;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ========== Layout ========== */
+
+.view {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.view.hidden {
+  display: none;
+}
+
+/* ========== Gallery View ========== */
+
+#gallery {
+  padding: 20px;
+  background: var(--bg-secondary);
+}
+
+.site-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.site-header h1 {
+  font-size: 2em;
+  margin-bottom: 8px;
+  color: var(--primary);
+}
+
+.subtitle {
+  color: var(--text-light);
+  font-size: 0.95em;
+}
+
+.region-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.chip {
+  padding: 8px 16px;
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--bg);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-preview {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  background: #f0f0f0;
+}
+
+model-viewer.card-preview {
+  width: 100%;
+  height: 200px;
+}
+
+.card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-title {
+  font-weight: 600;
+  color: var(--text);
+  display: block;
+}
+
+.card-desc {
+  font-size: 0.9em;
+  color: var(--text-light);
+  display: block;
+}
+
+.card-region {
+  font-size: 0.8em;
+  color: var(--primary);
+  font-weight: 500;
+  display: inline-block;
+  background: rgba(30, 64, 175, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.fallback {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-light);
+  background: var(--bg);
+  border-radius: 8px;
+  grid-column: 1 / -1;
+}
+
+/* ========== Viewer View ========== */
+
+#viewer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  gap: 12px;
+}
+
+.viewer-header h2 {
+  flex: 1;
+  font-size: 1.2em;
+  color: var(--text);
+  text-align: center;
+}
+
+.back-btn, .help-btn {
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.9em;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover, .help-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--primary-dark);
+}
+
+.help-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.viewer-wrap {
+  flex: 1;
+  position: relative;
+  background: #f0f0f0;
+  overflow: hidden;
+}
+
+model-viewer {
+  width: 100%;
+  height: 100%;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 10;
+  transition: opacity 0.3s ease;
+}
+
+.loading-overlay.done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-overlay span {
+  color: white;
+  font-size: 1em;
+}
+
+.instructions {
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  font-size: 0.9em;
+  color: var(--text-light);
+  text-align: center;
+}
+
+.qr-container {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+}
+
+.qr-container div:first-child {
+  font-size: 0.95em;
+  color: var(--text-light);
+}
+
+.qr-container canvas {
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  background: white;
+}
+
+/* ========== AR Instruction Panel ========== */
+
+.ar-instruction-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 12px;
+  padding: 16px;
+  color: white;
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(8px);
+}
+
+.ar-instruction-panel.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.panel-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.ar-instruction-panel p {
+  flex: 1;
+  font-size: 0.95em;
+  margin: 0;
+}
+
+.panel-content button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+#panelLockBtn {
+  background: var(--accent);
+  color: white;
+}
+
+#panelLockBtn:hover {
+  background: var(--accent-hover);
+}
+
+.close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ========== Floating Lock Button ========== */
+
+.floating-lock-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 19;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95em;
+}
+
+.floating-lock-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.floating-lock-btn:hover {
+  background: var(--accent-hover);
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+}
+
+.floating-lock-btn.locked {
+  background: var(--primary);
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+}
+
+.floating-lock-btn.locked:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 6px 16px rgba(30, 64, 175, 0.4);
+}
+
+/* ========== Branding Badge ========== */
+
+.branding-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(30, 64, 175, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.75em;
+  font-weight: 500;
+  z-index: 15;
+  opacity: 0.7;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+.branding-badge strong {
+  font-weight: 600;
+}
+
+/* ========== Modal ========== */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-card {
+  background: var(--bg);
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+  font-size: 1.3em;
+  color: var(--text);
+  margin: 0;
+}
+
+.modal-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+
+.modal-columns h4 {
+  font-size: 1em;
+  color: var(--primary);
+  margin: 0 0 12px 0;
+}
+
+.modal-columns ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-columns li {
+  font-size: 0.9em;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.modal-columns b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ========== Responsive ========== */
+
+@media (max-width: 768px) {
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .site-header h1 {
+    font-size: 1.5em;
+  }
+
+  .viewer-header {
+    padding: 8px 12px;
+  }
+
+  .viewer-header h2 {
+    font-size: 1em;
+  }
+
+  .back-btn, .help-btn {
+    padding: 6px 10px;
+    font-size: 0.85em;
+  }
+
+  .modal-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .ar-instruction-panel {
+    bottom: 70px;
+    left: 12px;
+    right: 12px;
+  }
+
+  .panel-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .ar-instruction-panel p {
+    margin-bottom: 8px;
+  }
+
+  .floating-lock-btn {
+    bottom: 12px;
+    right: 12px;
+    padding: 10px 14px;
+    font-size: 0.9em;
+  }
+
+  .branding-badge {
+    top: 8px;
+    right: 8px;
+    font-size: 0.7em;
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  #gallery {
+    padding: 12px;
+  }
+
+  .site-header {
+    margin-bottom: 20px;
+  }
+
+  .site-header h1 {
+    font-size: 1.3em;
+  }
+
+  .subtitle {
+    font-size: 0.85em;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .region-chips {
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .chip {
+    padding: 6px 12px;
+    font-size: 0.8em;
+  }
+}
+
+/* ========== Dark Mode (if supported) ========== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --text: #e5e5e5;
+    --text-light: #a3a3a3;
+    --border: #3d3d3d;
+  }
+
+  .card {
+    border-color: var(--border);
+  }
+
+  .qr-container canvas {
+    border-color: var(--border);
+  }
+}
+
+/* ========== Print ========== */
+
+@media print {
+  .viewer-header,
+  .instructions,
+  .qr-container,
+  .back-btn,
+  .help-btn,
+  .floating-lock-btn,
+  .ar-instruction-panel,
+  .branding-badge {
+    display: none;
+  }
+}
+
+/* ========== Drawing-anchor start screen (phone only) ========== */
+
+.anchor-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+  text-align: center;
+}
+
+.anchor-screen.hidden {
+  display: none;
+}
+
+.anchor-screen h2 {
+  font-size: 1.4em;
+  color: var(--text);
+}
+
+.anchor-steps {
+  list-style: decimal;
+  padding-left: 20px;
+  font-size: 1.1em;
+  line-height: 2;
+  color: var(--text);
+}
+
+.start-ar-btn {
+  padding: 16px 40px;
+  font-size: 1.2em;
+  font-weight: 600;
+  color: white;
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.start-ar-btn:disabled {
+  background: var(--text-light);
+  cursor: not-allowed;
+}
+
+.anchor-message {
+  color: var(--text-light);
+  font-size: 0.95em;
+  min-height: 1.2em;
+}

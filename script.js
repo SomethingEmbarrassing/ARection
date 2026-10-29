@@ -1,13 +1,4 @@
-// ============================================================
-// ARection — Spokane Metals LLC 3D Model Viewer
-// © 2025-2026 Matt Leon / Spokane Metals LLC. All rights reserved.
-// Proprietary. Unauthorized copying or redistribution is prohibited.
-// ============================================================
-
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-// Assumes GLB geometry is in meters (real-size AR). If a model is exported in other units, adjust here.
-const METERS_PER_FOOT = 0.3048;
 
 const gallery = document.getElementById('gallery');
 const viewer = document.getElementById('viewer');
@@ -18,50 +9,10 @@ const viewerTitle = document.getElementById('viewerTitle');
 const backBtn = document.getElementById('backBtn');
 const qrContainer = document.getElementById('qrContainer');
 const loadingOverlay = document.getElementById('loadingOverlay');
-const arInstructionPanel = document.getElementById('arInstructionPanel');
-const floatingLockBtn = document.getElementById('floatingLockBtn');
-const panelCloseBtn = document.getElementById('panelCloseBtn');
-const instructionText = document.getElementById('instructionText');
-const lockIcon = document.getElementById('lockIcon');
-const lockText = document.getElementById('lockText');
-const anchorScreen = document.getElementById('anchorScreen');
-const anchorTitle = document.getElementById('anchorTitle');
-const anchorMessage = document.getElementById('anchorMessage');
-const startArBtn = document.getElementById('startArBtn');
 
 let models = [];
 let activeRegion = 'All';
 let qr = null;
-
-// Drawing-anchor state (set only when opened from an erection-drawing QR code)
-let isAnchorMode = false;   // true when URL has anchor=origin
-let elevationFt = 0;        // level on the drawing, in feet (from z=ft-in.decimal)
-let isModelLocked = false;
-
-/**
- * Parse elevation "ft-in.decimal": "45-6.25" = 45 ft 6.25 in. "0-0" = ground.
- * Returns feet as a number.
- */
-function parseElevation(str) {
-  if (!str) return 0;
-  const parts = String(str).split('-');
-  const feet = parseFloat(parts[0]) || 0;
-  const inches = parts.length > 1 ? (parseFloat(parts[1]) || 0) : 0;
-  return feet + inches / 12;
-}
-
-/** Read anchor settings from the current URL. */
-function readAnchorParams() {
-  const params = new URLSearchParams(window.location.search);
-  isAnchorMode = params.get('anchor') === 'origin';
-  elevationFt = isAnchorMode ? parseElevation(params.get('z')) : 0;
-}
-
-function resetAnchorState() {
-  isAnchorMode = false;
-  elevationFt = 0;
-  isModelLocked = false;
-}
 
 function init() {
   if (typeof MODELS === 'undefined' || !Array.isArray(MODELS) || MODELS.length === 0) {
@@ -73,11 +24,10 @@ function init() {
   renderChips();
   renderCards();
 
-  // Deep link: ?model=<id>[&anchor=origin&z=ft-in.decimal]
+  // Deep link: ?model=<id> opens the viewer directly (used by QR codes)
   const requested = new URLSearchParams(window.location.search).get('model');
   const match = models.find(m => m.id === requested);
   if (match) {
-    readAnchorParams();
     openViewer(match, false);
   }
 }
@@ -132,10 +82,7 @@ function renderCards() {
         <span class="card-desc">${m.description || ''}</span>
         ${m.region ? `<span class="card-region">${m.region}</span>` : ''}
       </div>`;
-    card.addEventListener('click', () => {
-      resetAnchorState();
-      openViewer(m, true);
-    });
+    card.addEventListener('click', () => openViewer(m, true));
     cardGrid.appendChild(card);
   });
 }
@@ -162,25 +109,6 @@ function openViewer(m, pushState) {
     history.pushState({ model: m.id }, '', `?model=${encodeURIComponent(m.id)}`);
   }
 
-  // Erection-drawing QR: go straight to a phone-only AR start screen (no 3D preview)
-  if (isAnchorMode) {
-    setupAnchorScreen(m);
-  } else {
-    anchorScreen.classList.add('hidden');
-  }
-
-  // Drawing-anchor UI (lock button + instructions) only when opened from an erection-drawing QR
-  if (isAnchorMode) {
-    modelViewer.removeAttribute('auto-rotate'); // no spinning while aligning to paper
-    arInstructionPanel.classList.add('visible');
-    floatingLockBtn.classList.add('visible');
-  } else {
-    modelViewer.setAttribute('auto-rotate', '');
-    arInstructionPanel.classList.remove('visible');
-    floatingLockBtn.classList.remove('visible');
-  }
-  applyLockState();
-
   if (!isMobile) {
     qrContainer.style.display = 'flex';
     if (qr) {
@@ -204,36 +132,9 @@ function openViewer(m, pushState) {
   }
 }
 
-/** Phone-only start screen for erection-drawing QR codes. */
-function setupAnchorScreen(m) {
-  anchorTitle.textContent = m.name;
-  anchorScreen.classList.remove('hidden');
-  anchorMessage.textContent = '';
-  startArBtn.disabled = false;
-
-  if (!isMobile) {
-    anchorMessage.textContent = 'Scan this code with your phone to open AR.';
-    startArBtn.disabled = true;
-  } else if (!modelViewer.canActivateAR) {
-    anchorMessage.textContent = 'AR is not supported on this device.';
-    startArBtn.disabled = true;
-  }
-}
-
-startArBtn.addEventListener('click', async () => {
-  anchorScreen.classList.add('hidden');
-  try {
-    await modelViewer.activateAR();
-  } catch (err) {
-    anchorScreen.classList.remove('hidden');
-    anchorMessage.textContent = 'Could not start AR. Try again.';
-  }
-});
-
 function showGallery(pushState) {
   viewer.classList.add('hidden');
   gallery.classList.remove('hidden');
-  resetAnchorState();
   // Release the big model so the gallery stays light on phones
   modelViewer.removeAttribute('src');
   modelViewer.removeAttribute('ios-src');
@@ -242,51 +143,7 @@ function showGallery(pushState) {
   }
 }
 
-/**
- * Lock/unlock works in both the 3D preview and the AR session:
- * - interaction-policy="none" stops orbit/pan/zoom in the 3D preview.
- * - ar-scale="fixed" stops pinch-resize in WebXR AR.
- * Rotation lock in AR is best-effort; see notes in the README.
- */
-function applyLockState() {
-  modelViewer.setAttribute('interaction-policy', isModelLocked ? 'none' : 'always-allow');
-  modelViewer.setAttribute('ar-scale', isModelLocked ? 'fixed' : 'auto');
-
-  if (isModelLocked) {
-    lockIcon.textContent = '🔓';
-    lockText.textContent = 'Unlock';
-    floatingLockBtn.classList.add('locked');
-    instructionText.textContent = 'Locked. Tap Unlock to adjust.';
-  } else {
-    lockIcon.textContent = '🔒';
-    lockText.textContent = 'Lock';
-    floatingLockBtn.classList.remove('locked');
-    instructionText.textContent = 'Rotate & zoom to align, then Lock.';
-  }
-}
-
-/**
- * Shift the model so the drawing's level sits at paper height.
- * Model geometry is in true elevation (0 = ground), so the model moves DOWN by the level.
- * Example: z=45-6.25 on a 10-story tower puts the 45'-6.25" level flush with the sheet.
- * Note: applied to the Three.js root after load. If a viewer resets the root position,
- * the fallback is to bake the offset into the GLB (translate -elevation in Blender).
- */
-function applyElevation() {
-  const root = modelViewer.model;
-  if (!root) return;
-  root.position.y = -(elevationFt * METERS_PER_FOOT);
-}
-
-// Event listeners
 backBtn.addEventListener('click', () => showGallery(true));
-floatingLockBtn.addEventListener('click', () => {
-  isModelLocked = !isModelLocked;
-  applyLockState();
-});
-panelCloseBtn.addEventListener('click', () => {
-  arInstructionPanel.classList.remove('visible');
-});
 
 const helpModal = document.getElementById('helpModal');
 document.getElementById('helpBtn').addEventListener('click', () => helpModal.classList.remove('hidden'));
@@ -296,17 +153,10 @@ helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpMod
 window.addEventListener('popstate', () => {
   const requested = new URLSearchParams(window.location.search).get('model');
   const match = models.find(m => m.id === requested);
-  if (match) {
-    readAnchorParams();
-    openViewer(match, false);
-  } else {
-    showGallery(false);
-  }
+  if (match) openViewer(match, false);
+  else showGallery(false);
 });
 
-modelViewer.addEventListener('load', () => {
-  loadingOverlay.classList.add('done');
-  applyElevation();
-});
+modelViewer.addEventListener('load', () => loadingOverlay.classList.add('done'));
 
 init();
