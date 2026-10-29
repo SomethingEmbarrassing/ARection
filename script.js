@@ -135,7 +135,7 @@ function openViewer(m, pushState) {
 function showGallery(pushState) {
   viewer.classList.add('hidden');
   gallery.classList.remove('hidden');
-  // Release the big model so the gallery stays light on phones
+  // Release the big model so the gallery stays light on phones 
   modelViewer.removeAttribute('src');
   modelViewer.removeAttribute('ios-src');
   if (pushState) {

@@ -1,4 +1,4 @@
-// Model list — add new projects here. No other file needs editing.
+// Model list — add new projects here. No other file needs editing. yet.
 // image:  card thumbnail (e.g. "thumbs/25-23.jpg"), or "" for a live 3D preview (avoid: heavy on phones).
 // region: any label you like ("Downtown", "Valley", ...). Filter chips are built
 //         automatically from the regions used here. A Region of "" = only shows under "All".
